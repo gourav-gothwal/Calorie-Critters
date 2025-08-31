@@ -1,4 +1,4 @@
-package com.example.calorietracker
+package com.example.calorietracker.data.models
 
 import com.google.gson.annotations.SerializedName
 

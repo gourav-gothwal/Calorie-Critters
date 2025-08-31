@@ -9,4 +9,5 @@
     <string name="preview_image">Image Preview</string>
     <string name="select_image">Select Image</string>
     <string name="calorie_info">Calorie Information will be displayed here.</string>
+    <string name="api_key">8e39ae5c14d94cddb27382e5f012f959</string>
 </resources>

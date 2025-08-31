@@ -4,47 +4,58 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
-import android.widget.TextView
 import androidx.fragment.app.Fragment
+import com.example.calorietracker.databinding.FragmentProfilePageBinding
+import java.util.Locale
+import kotlin.text.toDoubleOrNull
 
-class profilePage : Fragment() {
-    private lateinit var weight: EditText
-    private lateinit var height: EditText
-    private lateinit var name: TextView
+class ProfilePage : Fragment() {
+
+    private var _binding: FragmentProfilePageBinding? = null
+    private val binding get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.fragment_profile_page, container, false)
+    ): View {
+        _binding = FragmentProfilePageBinding.inflate(inflater, container, false)
+        setupUI()
+        return binding.root
+    }
 
-        // Initialize views
-        name = view.findViewById(R.id.profile_name)
-        height = view.findViewById(R.id.editTextNumberDecimal2)
-        weight = view.findViewById(R.id.editTextNumberDecimal)
+    private fun setupUI() {
+        // Set the username from arguments
+        val userName = arguments?.getString("name") ?: "Guest"
+        binding.profileName.text = userName
 
-        // Get the username from the arguments
-        val userName = arguments?.getString("name") ?: ""
-        name.text = userName
-
-        return view
+        // Add listener to display BMI when inputs change
+        binding.weightInput.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) showBMI() }
+        binding.heightInput.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) showBMI() }
     }
 
     // Method to calculate BMI
-    private fun calculateBMI(): String {
-        val weightValue = weight.text.toString().toDoubleOrNull() ?: 0.0
-        val heightValue = height.text.toString().toDoubleOrNull() ?: 1.0
-
-        val bmi = weightValue / (heightValue * heightValue)
-        return "Your BMI is %.2f".format(bmi)
+    private fun calculateBMI(weight: Double, height: Double): String {
+        if (height <= 0) {
+            return "Invalid height"
+        }
+        if (weight <= 0) {
+            return "Invalid weight"
+        }
+        val bmi = weight / (height * height)
+        return String.format(Locale.getDefault(), "Your BMI is %.2f", bmi)
     }
 
     private fun showBMI() {
-        val bmiText = calculateBMI()
-        // Assuming you have a TextView to display the BMI result
-        val bmiTextView: TextView? = view?.findViewById(R.id.textView10)
-        bmiTextView?.text = bmiText
+        val weightValue = binding.weightInput.text.toString().toDoubleOrNull() ?: 0.0
+        val heightValue = binding.heightInput.text.toString().toDoubleOrNull() ?: 0.0
+
+        val bmiText = calculateBMI(weightValue, heightValue)
+        binding.bmiResult.text = bmiText
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
