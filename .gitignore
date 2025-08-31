@@ -1,15 +1,42 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+# =========================================
+# Build files and artifacts
+# =========================================
+**/build/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# =========================================
+# Local configuration (SDK path, API keys)
+# =========================================
 local.properties
+
+# =========================================
+# IDE files (Android Studio & IntelliJ)
+# =========================================
+.idea/
+*.iml
+.gradle/
+*.nav_editor_asset_keys
+
+# =========================================
+# Sensitive files (Signing keys)
+# =========================================
+*.jks
+*.keystore
+signing.properties
+
+# =========================================
+# Generated files & System files
+# =========================================
+captures/
+.DS_Store
+*~
+*.log
+
+# =========================================
+# Google Services (if you add it manually)
+# =========================================
+google-services.json
