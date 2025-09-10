@@ -30,21 +30,21 @@ Interact with registered nutritionists for personalized advice and
 guidance.
 
 📸 **5. AI-Powered Food Recognition (Snap & Track)**\
-Take a picture of your meal and let our AI model:\
-- Identify food items\
-- Estimate portion sizes\
+Take a picture of your meal and let our AI model:
+- Identify food items
+- Estimate portion sizes
 - Provide calorie & nutrition breakdown (fats, carbs, protein)
 
 ------------------------------------------------------------------------
 
 ## 🛠️ Technology Stack
 
--   **Language:** Kotlin\
--   **Architecture:** MVVM (Model-View-ViewModel)\
--   **UI:** Android XML with Material Design Components\
--   **Asynchronous Programming:** Kotlin Coroutines & Flow\
--   **Networking:** Retrofit & OkHttp\
--   **Image Recognition Model:** Spoonacular API / Nutritionix API\
+-   **Language:** Kotlin
+-   **Architecture:** MVVM (Model-View-ViewModel)
+-   **UI:** Android XML with Material Design Components
+-   **Asynchronous Programming:** Kotlin Coroutines & Flow
+-   **Networking:** Retrofit & OkHttp
+-   **Image Recognition Model:** Spoonacular API / Nutritionix API
 -   **Image Handling:** ML Kit Image Labeling
 
 ------------------------------------------------------------------------
@@ -53,7 +53,7 @@ Take a picture of your meal and let our AI model:\
 
 ### Prerequisites
 
--   Android Studio (latest version recommended)\
+-   Android Studio (latest version recommended)
 -   API Key from a food recognition service (Spoonacular or
     Nutritionix).
 
@@ -62,7 +62,7 @@ Take a picture of your meal and let our AI model:\
 1.  Clone the repository:
 
     ``` bash
-    git clone https://github.com/your-username/calorie-critters.git
+    git clone https://github.com/gourav-gothwal/calorie-critters.git
     ```
 
 2.  Open the project in Android Studio.
@@ -70,7 +70,7 @@ Take a picture of your meal and let our AI model:\
 3.  Set up your API Keys:
 
     -   Open the `local.properties` file in your project's root
-        directory (create it if it doesn't exist).\
+        directory (create it if it doesn't exist).
 
     -   Add your API key and App ID (if applicable):
 
@@ -98,16 +98,16 @@ Take a picture of your meal and let our AI model:\
 
 Contributions are welcome!
 
-1.  Fork the project\
+1.  Fork the project
 2.  Create your feature branch
-    (`git checkout -b feature/AmazingFeature`)\
-3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`)\
-4.  Push to the branch (`git push origin feature/AmazingFeature`)\
+    (`git checkout -b feature/AmazingFeature`)
+3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4.  Push to the branch (`git push origin feature/AmazingFeature`)
 5.  Open a Pull Request
 
 ------------------------------------------------------------------------
 
 ## 📄 License
 
-Distributed under the MIT License.\
+Distributed under the MIT License.
 See `LICENSE` for more information.
