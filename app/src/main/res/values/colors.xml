@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="light_green">#9FFFCB</color>
+    <color name="cream">#fde9b7</color>
+    <color name="geraldine">#f78e95</color>
+    <color name="pink">#fabac4</color>
+    <color name="light_yellow">#f8fa8c</color>
+    <color name="light_blue">#6ac5fe</color>
+    <color name="blue">#0000FF</color>
+    <color name="grey">#d2d2d2</color>
+    <color name="summer_daffodil">#FFE078</color>
+</resources>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/navigation_home">
+
+    <fragment
+        android:id="@+id/recipeDetailFragment"
+        android:name="com.example.nutrisnapapp.RecipeDetailFragment"
+        android:label="Recipe Detail"
+        tools:layout="@layout/fragment_recipe_detail" />
+
+    <!-- 🏠 Home Fragment -->
+    <fragment
+        android:id="@+id/navigation_home"
+        android:name="com.example.nutrisnapapp.HomePage"
+        android:label="@string/title_home"
+        tools:layout="@layout/fragment_home_page">
+
+        <!-- Existing actions -->
+        <action
+            android:id="@+id/action_home_to_dashboard"
+            app:destination="@id/navigation_dashboard" />
+
+        <action
+            android:id="@+id/action_home_to_notifications"
+            app:destination="@id/navigation_notifications" />
+
+        <!-- ✅ Action to RecipeDetailFragment -->
+        <action
+            android:id="@+id/action_home_to_recipeDetail"
+            app:destination="@id/recipeDetailFragment" />
+    </fragment>
+
+
+    <!-- 📊 Dashboard Fragment -->
+    <fragment
+        android:id="@+id/navigation_dashboard"
+        android:name="com.example.nutrisnapapp.DashboardFragment"
+        android:label="@string/title_dashboard"
+        tools:layout="@layout/fragment_dashboard">
+
+        <!-- 👇 Action back to Home -->
+        <action
+            android:id="@+id/action_dashboard_to_home"
+            app:destination="@id/navigation_home" />
+
+        <!-- 👇 Action to Notifications -->
+        <action
+            android:id="@+id/action_dashboard_to_notifications"
+            app:destination="@id/navigation_notifications" />
+    </fragment>
+
+    <!-- 🔔 Notifications Fragment -->
+    <fragment
+        android:id="@+id/navigation_notifications"
+        android:name="com.example.calorietracker.ui.notifications.NotificationsFragment"
+        android:label="@string/title_notifications"
+        tools:layout="@layout/fragment_notifications">
+
+        <!-- 👇 Action back to Home -->
+        <action
+            android:id="@+id/action_notifications_to_home"
+            app:destination="@id/navigation_home" />
+
+        <!-- 👇 Action to Dashboard -->
+        <action
+            android:id="@+id/action_notifications_to_dashboard"
+            app:destination="@id/navigation_dashboard" />
+    </fragment>
+
+</navigation>
