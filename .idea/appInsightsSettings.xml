@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.example.nutrisnapapp" />
+                  <option name="mobileSdkAppId" value="1:359162917439:android:7b448d4e7a78b28e90be8a" />
+                  <option name="projectId" value="calorie-critters" />
+                  <option name="projectNumber" value="359162917439" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

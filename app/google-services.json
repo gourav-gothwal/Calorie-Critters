@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "359162917439",
+    "project_id": "calorie-critters",
+    "storage_bucket": "calorie-critters.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:359162917439:android:7b448d4e7a78b28e90be8a",
+        "android_client_info": {
+          "package_name": "com.example.nutrisnapapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "359162917439-kt1u97suq49d9q31usjp56c5og1kma5l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.nutrisnapapp",
+            "certificate_hash": "6b0fce35fec234bddee1b602129524197a67e6f4"
+          }
+        },
+        {
+          "client_id": "359162917439-42no92v7cl04r76c1mji0g2sadl1m5sb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKv3nVswPhGiSRDjWU9yhsTk-DGWhATjQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "359162917439-42no92v7cl04r76c1mji0g2sadl1m5sb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

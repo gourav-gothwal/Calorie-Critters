@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -71,8 +72,6 @@ dependencies {
 
     // ✅ Credentials (simplified - remove if not needed)
     implementation("androidx.credentials:credentials:1.2.0")
-    // implementation("androidx.credentials:credentials-play-services-auth:1.2.0") // Remove if causing issues
-    // implementation("com.google.android.libraries.identity.googleid:googleid") // Remove if not needed
 
     // ✅ Kotlin serialization + Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0") // Updated to stable

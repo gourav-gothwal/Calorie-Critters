@@ -11,4 +11,22 @@
     <color name="blue">#0000FF</color>
     <color name="grey">#d2d2d2</color>
     <color name="summer_daffodil">#FFE078</color>
+    
+    <!-- Scan Page Gradient Colors -->
+    <color name="gradient_start">#FF6B6B</color>
+    <color name="gradient_center">#FF8E53</color>
+    <color name="gradient_end">#FFA726</color>
+    
+    <!-- Nutrition Card Colors -->
+    <color name="calories_color">#FF5722</color>
+    <color name="protein_color">#4CAF50</color>
+    <color name="carbs_color">#2196F3</color>
+    <color name="fat_color">#9C27B0</color>
+    
+    <!-- UI Colors -->
+    <color name="card_background">#FFFFFF</color>
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="divider">#E0E0E0</color>
+    <color name="background_light">#F8F9FA</color>
 </resources>

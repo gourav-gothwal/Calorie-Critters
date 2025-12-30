@@ -1,148 +1,233 @@
 package com.example.nutrisnapapp
 
-import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.EditText
-import android.widget.ProgressBar
-import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.cardview.widget.CardView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.nutrisnapapp.adapters.MealAdapter
-import com.example.nutrisnapapp.data.remote.RecipeRetrofitClient
-import kotlinx.coroutines.launch
-import androidx.navigation.fragment.findNavController
 import com.example.nutrisnapapp.data.models.RecipeItem
+import com.example.nutrisnapapp.data.remote.RecipeRetrofitClient
+import com.example.nutrisnapapp.databinding.FragmentHomePageBinding
 import com.example.nutrisnapapp.viewmodel.UserStatsViewModel
-
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
 class HomePage : Fragment() {
 
-    private lateinit var fabAdd: com.google.android.material.floatingactionbutton.FloatingActionButton
-
-    private lateinit var totalCaloriesTextView: TextView
-    private lateinit var totalWaterTextView: TextView
-    private lateinit var calorieProgressBar: com.mikhaellopez.circularprogressbar.CircularProgressBar
-    private lateinit var waterProgressBar: com.mikhaellopez.circularprogressbar.CircularProgressBar
-
-    private lateinit var name: TextView
+    private var _binding: FragmentHomePageBinding? = null
+    private val binding get() = _binding!!
 
     private var totalCalories = 0
     private var totalWater = 0
+    private val calorieGoal = 2000
+    private val waterGoal = 3000
+    
     private lateinit var mealAdapter: MealAdapter
-    private lateinit var recyclerViewMeals: RecyclerView
     private val mealList = mutableListOf<RecipeItem>()
     private val statsViewModel: UserStatsViewModel by activityViewModels()
-
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.fragment_home_page, container, false)
+    ): View {
+        _binding = FragmentHomePageBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
-        totalCaloriesTextView = view.findViewById(R.id.caloriesCount)
-        totalWaterTextView = view.findViewById(R.id.waterIntake)
-        calorieProgressBar = view.findViewById(R.id.caloriesCircularProgress)
-        waterProgressBar = view.findViewById(R.id.waterCircularProgress)
-        name = view.findViewById(R.id.userName)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        fabAdd = view.findViewById(R.id.fabAdd)
-        fabAdd.setOnClickListener {
-            showAddOptions()
-        }
-
-        val userName = arguments?.getString("name") ?: ""
-        name.text = "$userName"
-
-        calorieProgressBar.progress = totalCalories.toFloat()
-        waterProgressBar.progress = totalWater.toFloat()
-        calorieProgressBar.progressMax = 2000f
-        waterProgressBar.progressMax = 3000f
-
-        recyclerViewMeals = view.findViewById(R.id.recyclerViewMeals)
-        recyclerViewMeals.layoutManager =
-            LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
-
-// Initialize empty adapter
-        // In HomePage.kt
-        mealAdapter = MealAdapter(mealList) { meal ->
-            val bundle = Bundle()
-            bundle.putInt("mealId", meal.id)
-            // Safe navigation from fragment
-            findNavController().navigate(R.id.action_home_to_recipeDetail, bundle)
-        }
-        recyclerViewMeals.adapter = mealAdapter
-
-
-// Fetch meals from API
+        setupUserInfo()
+        setupProgressBars()
+        setupClickListeners()
+        setupRecyclerView()
         fetchRandomMeals()
-        return view
+        animateEntrance()
     }
 
-    private fun showCalorieAlert(context: Context) {
-        val builder = AlertDialog.Builder(context)
-        builder.setTitle("Add Calories")
-        builder.setMessage("Enter value")
-        val input = EditText(context)
-        builder.setView(input)
-        builder.setPositiveButton("OK") { dialog, _ ->
-            val value = input.text.toString()
-            if (value.isNotEmpty()) {
-                val calories = value.toIntOrNull() ?: 0
-                updateTotalCalories(calories)
-            } else {
-                Toast.makeText(context, "Invalid input", Toast.LENGTH_SHORT).show()
+    private fun setupUserInfo() {
+        // Get user name from Firebase or arguments
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        
+        // Priority: 1. Intent argument, 2. Firebase displayName, 3. Email prefix, 4. "User"
+        val userName = when {
+            // Check if passed via arguments
+            !arguments?.getString("name").isNullOrEmpty() -> {
+                arguments?.getString("name")
             }
+            // Check Firebase display name (from Google Sign-In)
+            !currentUser?.displayName.isNullOrEmpty() -> {
+                // Get first name only if there's a space
+                currentUser?.displayName?.split(" ")?.firstOrNull() 
+                    ?: currentUser?.displayName
+            }
+            // Use email prefix as fallback
+            !currentUser?.email.isNullOrEmpty() -> {
+                currentUser?.email?.substringBefore("@")?.replaceFirstChar { it.uppercase() }
+            }
+            else -> "User"
         }
-        builder.setNegativeButton("Cancel") { dialog, _ ->
-            dialog.cancel()
-        }
-        builder.show()
+        
+        binding.userName.text = userName ?: "User"
     }
 
-    private fun showWaterAlert(context: Context) {
-        val builder = AlertDialog.Builder(context)
-        builder.setTitle("Add Water")
-        builder.setMessage("Enter value (ml)")
-        val input = EditText(context)
-        builder.setView(input)
-        builder.setPositiveButton("OK") { dialog, _ ->
-            val value = input.text.toString()
-            if (value.isNotEmpty()) {
-                val water = value.toIntOrNull() ?: 0
-                updateTotalWater(water)
-            } else {
-                Toast.makeText(context, "Invalid input", Toast.LENGTH_SHORT).show()
+    private fun setupProgressBars() {
+        binding.caloriesCircularProgress.progressMax = calorieGoal.toFloat()
+        binding.waterCircularProgress.progressMax = waterGoal.toFloat()
+        binding.caloriesCircularProgress.progress = totalCalories.toFloat()
+        binding.waterCircularProgress.progress = totalWater.toFloat()
+        
+        updateCaloriesUI()
+        updateWaterUI()
+    }
+
+    private fun setupClickListeners() {
+        // Quick action buttons
+        binding.btnAddCalories.setOnClickListener {
+            showCalorieDialog()
+        }
+
+        binding.btnAddWater.setOnClickListener {
+            showWaterDialog()
+        }
+
+        // FAB - navigate to scan page via bottom nav
+        binding.fabAdd.setOnClickListener {
+            // Select the scan tab in bottom navigation
+            activity?.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNavigationView)
+                ?.selectedItemId = R.id.bottom_scan
+        }
+
+        // Calorie card tap
+        binding.cardCalories.setOnClickListener {
+            showCalorieDialog()
+        }
+
+        // Water card tap
+        binding.cardWater.setOnClickListener {
+            showWaterDialog()
+        }
+    }
+
+    private fun setupRecyclerView() {
+        binding.recyclerViewMeals.layoutManager = LinearLayoutManager(
+            requireContext(), 
+            LinearLayoutManager.VERTICAL, 
+            false
+        )
+
+        mealAdapter = MealAdapter(mealList) { meal ->
+            // Navigate to recipe detail via fragment transaction
+            val detailFragment = RecipeDetailFragment().apply {
+                arguments = Bundle().apply {
+                    putInt("mealId", meal.id)
+                }
             }
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.flFragment, detailFragment)
+                .addToBackStack(null)
+                .commit()
         }
-        builder.setNegativeButton("Cancel") { dialog, _ ->
-            dialog.cancel()
+        
+        binding.recyclerViewMeals.adapter = mealAdapter
+    }
+
+    private fun animateEntrance() {
+        // Simple fade-in for cards
+        binding.cardCalories.alpha = 0f
+        binding.cardWater.alpha = 0f
+        
+        binding.cardCalories.animate()
+            .alpha(1f)
+            .setDuration(400)
+            .setStartDelay(100)
+            .start()
+            
+        binding.cardWater.animate()
+            .alpha(1f)
+            .setDuration(400)
+            .setStartDelay(200)
+            .start()
+    }
+
+    private fun showCalorieDialog() {
+        val input = EditText(requireContext()).apply {
+            hint = "Enter calories"
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            setPadding(48, 32, 48, 32)
         }
-        builder.show()
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Add Calories")
+            .setView(input)
+            .setPositiveButton("Add") { _, _ ->
+                val value = input.text.toString().toIntOrNull() ?: 0
+                if (value > 0) {
+                    updateTotalCalories(value)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showWaterDialog() {
+        val input = EditText(requireContext()).apply {
+            hint = "Enter ml"
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            setPadding(48, 32, 48, 32)
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Add Water")
+            .setView(input)
+            .setPositiveButton("Add") { _, _ ->
+                val value = input.text.toString().toIntOrNull() ?: 0
+                if (value > 0) {
+                    updateTotalWater(value)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun updateTotalCalories(caloriesToAdd: Int) {
         totalCalories += caloriesToAdd
-        totalCaloriesTextView.text = totalCalories.toString()
-        calorieProgressBar.progress = totalCalories.toFloat()
+        updateCaloriesUI()
+        
+        // Animate progress
+        binding.caloriesCircularProgress.setProgressWithAnimation(
+            totalCalories.toFloat(), 
+            500
+        )
     }
 
     private fun updateTotalWater(waterToAdd: Int) {
         totalWater += waterToAdd
-        totalWaterTextView.text = totalWater.toString()
-        waterProgressBar.progress = totalWater.toFloat()
+        updateWaterUI()
+        
+        // Animate progress
+        binding.waterCircularProgress.setProgressWithAnimation(
+            totalWater.toFloat(), 
+            500
+        )
+    }
+
+    private fun updateCaloriesUI() {
+        binding.caloriesCount.text = totalCalories.toString()
+        binding.caloriesGoal.text = "of $calorieGoal"
+    }
+
+    private fun updateWaterUI() {
+        binding.waterIntake.text = totalWater.toString()
+        binding.waterGoal.text = "of $waterGoal"
     }
 
     private fun fetchRandomMeals() {
@@ -150,35 +235,24 @@ class HomePage : Fragment() {
             try {
                 val response = RecipeRetrofitClient.api.getRandomMeals(
                     apiKey = getString(R.string.api_key),
-                    number = 10
+                    number = 5
                 )
 
                 Log.d("HomePage", "Recipes returned: ${response.recipes.size}")
-                response.recipes.forEach { Log.d("HomePage", it.title) }
 
-                val meals = response.recipes
                 mealList.clear()
-                mealList.addAll(meals)
+                mealList.addAll(response.recipes)
                 mealAdapter.notifyDataSetChanged()
 
             } catch (e: Exception) {
-                e.printStackTrace()
-                Toast.makeText(requireContext(), "API call failed: ${e.message}", Toast.LENGTH_LONG).show()
+                Log.e("HomePage", "API call failed", e)
+                // Don't show toast for API failures - just log it
             }
         }
     }
 
-
-    private fun showAddOptions() {
-        val options = arrayOf("Add Calories", "Add Water")
-        val builder = androidx.appcompat.app.AlertDialog.Builder(requireContext())
-        builder.setTitle("Select Option")
-        builder.setItems(options) { dialog, which ->
-            when (which) {
-                0 -> showCalorieAlert(requireContext())
-                1 -> showWaterAlert(requireContext())
-            }
-        }
-        builder.show()
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
