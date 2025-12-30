@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import com.example.nutrisnapapp.BuildConfig
 
 class FoodViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -36,7 +37,7 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
                 val requestBody = fileBytes.toRequestBody("image/jpeg".toMediaTypeOrNull())
                 val imagePart = MultipartBody.Part.createFormData("file", "food_image.jpg", requestBody)
 
-                val apiKey = getApplication<Application>().getString(R.string.api_key)
+                val apiKey = BuildConfig.SPOONACULAR_API_KEY
                 val response = RecipeRetrofitClient.api.analyzeImage(apiKey, imagePart)
 
                 if (response.isSuccessful && response.body() != null) {

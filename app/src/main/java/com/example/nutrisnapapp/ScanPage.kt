@@ -44,7 +44,7 @@ class ScanPage : Fragment() {
     
     private var imageUri: Uri? = null
     private var currentPhotoPath: String? = null
-    private val apiKey = "8e39ae5c14d94cddb27382e5f012f959"
+    private val apiKey = BuildConfig.SPOONACULAR_API_KEY
 
     companion object {
         private const val TAG = "ScanPage"

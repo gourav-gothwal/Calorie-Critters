@@ -77,7 +77,7 @@ class RecipeDetailFragment : Fragment() {
             try {
                 val response = RecipeRetrofitClient.api.getRecipeDetails(
                     id = id,
-                    apiKey = getString(R.string.api_key)
+                    apiKey = BuildConfig.SPOONACULAR_API_KEY
                 )
                 
                 Log.d(TAG, "Recipe fetched: ${response.title}")

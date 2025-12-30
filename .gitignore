@@ -1,15 +1,220 @@
+# =============================================================================
+# Android Studio / IntelliJ IDEA
+# =============================================================================
+
+# IDE specific files
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+.idea/
+!.idea/codeStyles/
+!.idea/inspectionProfiles/
+
+# Gradle wrapper jar (optional - some prefer to commit this)
+# gradle/wrapper/gradle-wrapper.jar
+
+# =============================================================================
+# Gradle
+# =============================================================================
+
+# Gradle build files
+.gradle/
+build/
+**/build/
+
+# Gradle cache
+.gradle-cache/
+
+# Gradle daemon
+.gradle/daemon/
+
+# =============================================================================
+# Local Configuration
+# =============================================================================
+
+# Local SDK path and signing config
 local.properties
+
+# Google Services (contains API keys - IMPORTANT: keep private!)
+app/google-services.json
+# app/google-services.json
+
+# =============================================================================
+# Build Outputs
+# =============================================================================
+
+# Compiled files
+*.class
+*.dex
+
+# APK and AAB files
+*.apk
+*.aab
+*.ap_
+
+# Generated files
+gen/
+out/
+
+# Proguard
+proguard/
+
+# Log files
+*.log
+
+# =============================================================================
+# Native Development (NDK)
+# =============================================================================
+
+.externalNativeBuild/
+.cxx/
+obj/
+
+# CMake
+CMakeFiles/
+cmake-build-*/
+
+# =============================================================================
+# Testing
+# =============================================================================
+
+# Test output
+/captures/
+*.exec
+
+# Coverage reports
+coverage/
+jacoco/
+*.ec
+
+# =============================================================================
+# Operating System Files
+# =============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+
+# =============================================================================
+# IDE Specific (Additional)
+# =============================================================================
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# Eclipse
+.project
+.classpath
+.settings/
+.buildpath
+
+# NetBeans
+nbproject/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# =============================================================================
+# Signing Keys (NEVER commit these!)
+# =============================================================================
+
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+signing.properties
+keystore.properties
+
+# =============================================================================
+# Sensitive Data
+# =============================================================================
+
+# API keys and secrets (if stored in separate files)
+secrets.properties
+api-keys.properties
+*.secret
+
+# Firebase (optional - might contain sensitive config)
+# firebase.json
+# .firebaserc
+
+# =============================================================================
+# Crash Reporting & Analytics
+# =============================================================================
+
+# Crashlytics
+crashlytics-build.properties
+crashlytics.properties
+fabric.properties
+
+# =============================================================================
+# Kotlin
+# =============================================================================
+
+# Kotlin compiler output
+.kotlin/
+
+# =============================================================================
+# Miscellaneous
+# =============================================================================
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~.nib
+
+# Backup files
+*.bak
+*.backup
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+
+# Cache directories
+.cache/
+
+# Freeline (build acceleration tool)
+freeline.py
+freeline/
+freeline_project_description.json
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+fastlane/readme.md
+
+# =============================================================================
+# App-Specific (customize as needed)
+# =============================================================================
+
+# Database files (if any)
+*.db
+*.sqlite
+
+# Debug files
+debug/
+
+# Release builds (optional - uncomment if you want to ignore)
+# app/release/
+

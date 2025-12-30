@@ -41,6 +41,7 @@
     <string name="logout">Log Out</string>
     <string name="app_version">Version 1.0.0</string>
 
-    <string name="api_key">8e39ae5c14d94cddb27382e5f012f959</string>
-    <string name="default_web_client_id">359162917439-kt1u97suq49d9q31usjp56c5og1kma5l.apps.googleusercontent.com</string>
+    <!-- Secrets (moved to local.properties) -->
+    <string name="api_key">REPLACEME</string>
+    <string name="default_web_client_id">REPLACEME</string>
 </resources>

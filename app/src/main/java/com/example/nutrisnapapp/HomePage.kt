@@ -234,7 +234,7 @@ class HomePage : Fragment() {
         lifecycleScope.launch {
             try {
                 val response = RecipeRetrofitClient.api.getRandomMeals(
-                    apiKey = getString(R.string.api_key),
+                    apiKey = BuildConfig.SPOONACULAR_API_KEY,
                     number = 5
                 )
 
