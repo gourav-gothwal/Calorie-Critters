@@ -49,8 +49,20 @@ class RecipeDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Get recipe ID from arguments
+        // Get initial data from arguments to show something immediately
         recipeId = arguments?.getInt("mealId", -1) ?: -1
+        val initialTitle = arguments?.getString("mealTitle")
+        val initialImage = arguments?.getString("mealImage")
+        
+        // Show initial data if available
+        initialTitle?.let { binding.textTitle.text = it }
+        initialImage?.let { imageUrl ->
+            binding.imageRecipe.load(imageUrl) {
+                crossfade(true)
+                placeholder(R.drawable.image_preview_placeholder)
+                error(R.drawable.image_preview_placeholder)
+            }
+        }
         
         Log.d(TAG, "Recipe ID: $recipeId")
         
@@ -74,7 +86,14 @@ class RecipeDetailFragment : Fragment() {
         showLoading(true)
         
         lifecycleScope.launch {
+            if (_binding == null) return@launch
             try {
+                // Check if it's one of our mock IDs (1, 2, 3)
+                if (id in 1..3) {
+                    showMockDetails(id)
+                    return@launch
+                }
+                
                 val response = RecipeRetrofitClient.api.getRecipeDetails(
                     id = id,
                     apiKey = BuildConfig.SPOONACULAR_API_KEY
@@ -85,20 +104,35 @@ class RecipeDetailFragment : Fragment() {
                 
             } catch (e: Exception) {
                 Log.e(TAG, "Error fetching recipe", e)
-                showError("Failed to load recipe: ${e.localizedMessage}")
+                val errorMessage = if (e.message?.contains("402") == true) {
+                    "Daily limit reached (API 402). Showing partial data."
+                } else {
+                    "Failed to load details: ${e.localizedMessage}"
+                }
+                showError(errorMessage)
             } finally {
                 showLoading(false)
             }
         }
     }
 
+    private fun showMockDetails(id: Int) {
+        val mock = when(id) {
+            1 -> RecipeDetailResponse(1, "Healthy Avocado Toast", null, "A simple, heart-healthy breakfast with mashed avocado, chili flakes, and a squeeze of lime on sourdough.", "1. Toast bread. 2. Mash avocado. 3. Season and spread.", 10, 1, null, null, true, true, true, true, 95, null, null)
+            2 -> RecipeDetailResponse(2, "Fresh Berry Smoothie", null, "A vibrant mix of strawberries, blueberries, and Greek yogurt for a nutrient-packed start.", "1. Add all items to blender. 2. Blend until smooth. 3. Serve cold.", 5, 2, null, null, true, false, true, false, 88, null, null)
+            else -> RecipeDetailResponse(3, "Grilled Chicken Salad", null, "Lean chicken breast over a bed of fresh greens, cherry tomatoes, and balsamic glaze.", "1. Grill chicken until cooked. 2. Chop vegetables. 3. Toss with dressing.", 25, 1, null, null, false, false, true, true, 92, null, null)
+        }
+        displayRecipe(mock)
+        showLoading(false)
+    }
+
     private fun displayRecipe(recipe: RecipeDetailResponse) {
+        if (_binding == null) return
         // Load image
         recipe.image?.let { imageUrl ->
             binding.imageRecipe.load(imageUrl) {
                 crossfade(true)
-                placeholder(android.R.drawable.ic_menu_gallery)
-                error(android.R.drawable.ic_menu_gallery)
+                crossfade(400)
             }
         }
 
@@ -138,10 +172,10 @@ class RecipeDetailFragment : Fragment() {
         
         val tags = mutableListOf<String>()
         
-        if (recipe.vegetarian == true) tags.add("🥬 Vegetarian")
-        if (recipe.vegan == true) tags.add("🌱 Vegan")
-        if (recipe.glutenFree == true) tags.add("🌾 Gluten-Free")
-        if (recipe.dairyFree == true) tags.add("🥛 Dairy-Free")
+        if (recipe.vegetarian == true) tags.add("Vegetarian")
+        if (recipe.vegan == true) tags.add("Vegan")
+        if (recipe.glutenFree == true) tags.add("Gluten-Free")
+        if (recipe.dairyFree == true) tags.add("Dairy-Free")
         
         if (tags.isNotEmpty()) {
             binding.chipGroupDiet.visibility = View.VISIBLE
@@ -207,8 +241,8 @@ class RecipeDetailFragment : Fragment() {
             
             // Bullet point
             val bullet = TextView(context).apply {
-                this.text = "•"
-                setTextColor(ContextCompat.getColor(context, R.color.gradient_start))
+                this.text = "●"
+                setTextColor(ContextCompat.getColor(context, R.color.accent_vivid))
                 textSize = 16f
                 setPadding(0, 0, 16, 0)
             }
@@ -230,7 +264,9 @@ class RecipeDetailFragment : Fragment() {
     }
 
     private fun showLoading(show: Boolean) {
-        binding.loadingOverlay.visibility = if (show) View.VISIBLE else View.GONE
+        _binding?.let { 
+            it.loadingOverlay.visibility = if (show) View.VISIBLE else View.GONE
+        }
     }
 
     private fun showError(message: String) {

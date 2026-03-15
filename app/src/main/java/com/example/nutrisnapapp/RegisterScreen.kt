@@ -16,9 +16,15 @@ class RegisterScreen : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
 
+        val name = findViewById<EditText>(R.id.regName)
         val email = findViewById<EditText>(R.id.regEmail)
         val pass = findViewById<EditText>(R.id.regPass)
         val btn = findViewById<Button>(R.id.registerBtn)
+        val txtGoToLogin = findViewById<android.widget.TextView>(R.id.txtGoToLogin)
+
+        txtGoToLogin.setOnClickListener {
+            finish() // Since LoginScreen opens RegisterScreen, finishing takes user back
+        }
 
         btn.setOnClickListener {
             if (email.text.isEmpty() || pass.text.isEmpty()) {

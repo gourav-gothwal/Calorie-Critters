@@ -1,6 +1,7 @@
 package com.example.nutrisnapapp.data.remote
 
 import com.example.nutrisnapapp.data.models.FoodAnalysisModels
+import com.example.nutrisnapapp.data.models.Nutrition
 import com.example.nutrisnapapp.data.models.RandomRecipeResponse
 import com.example.nutrisnapapp.data.models.RecipeDetailResponse
 import com.example.nutrisnapapp.data.models.RecipeSearchResponse
@@ -29,4 +30,17 @@ interface RecipeApiService {
         @Query("apiKey") apiKey: String,
         @Part part: MultipartBody.Part
     ): Response<FoodAnalysisModels>
+
+    @GET("recipes/complexSearch")
+    suspend fun searchRecipes(
+        @Query("apiKey") apiKey: String,
+        @Query("query") query: String,
+        @Query("number") number: Int = 20
+    ): RecipeSearchResponse
+
+    @GET("recipes/guessNutrition")
+    suspend fun getNutritionByFoodName(
+        @Query("apiKey") apiKey: String,
+        @Query("title") title: String
+    ): Response<Nutrition>
 }

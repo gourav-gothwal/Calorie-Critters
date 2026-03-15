@@ -7,18 +7,25 @@
     android:background="@color/background_light"
     tools:context=".MainActivity">
 
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/scrollView"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefresh"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true"
-        android:scrollbars="none">
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/scrollView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:fillViewport="true"
+            android:scrollbars="none">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingBottom="80dp">
+            android:paddingBottom="100dp">
 
             <!-- Header Section -->
             <LinearLayout
@@ -46,6 +53,59 @@
                     android:textColor="@color/text_primary"
                     android:textSize="26sp"
                     android:textStyle="bold" />
+
+                <!-- Refined Search Bar -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardSearch"
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:layout_marginTop="20dp"
+                    app:cardBackgroundColor="#F8F9FA"
+                    app:cardCornerRadius="27dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="#EEF0F2"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="18dp">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:alpha="0.6"
+                            android:src="@drawable/baseline_search_24"
+                            app:tint="@color/text_primary" />
+
+                        <EditText
+                            android:id="@+id/editSearch"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:background="@android:color/transparent"
+                            android:hint="Search for recipes..."
+                            android:imeOptions="actionSearch"
+                            android:inputType="text"
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="#99A4AD"
+                            android:textSize="15sp" />
+
+                        <ImageView
+                            android:id="@+id/btnClearSearch"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:alpha="0.5"
+                            android:padding="4dp"
+                            android:src="@drawable/ic_clear"
+                            android:visibility="gone"
+                            app:tint="@color/text_secondary" />
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>
 
@@ -77,9 +137,10 @@
                     android:layout_marginStart="4dp"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
-                    app:cardBackgroundColor="@color/white"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="2dp">
+                    app:cardBackgroundColor="@color/bg_stats_orange"
+                    app:cardCornerRadius="32dp"
+                    app:cardElevation="0dp"
+                    app:cardMaxElevation="0dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -159,9 +220,10 @@
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="4dp"
                     android:layout_weight="1"
-                    app:cardBackgroundColor="@color/white"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="2dp">
+                    app:cardBackgroundColor="@color/bg_stats_blue"
+                    app:cardCornerRadius="32dp"
+                    app:cardElevation="0dp"
+                    app:cardMaxElevation="0dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -254,7 +316,7 @@
                     android:text="+ Calories"
                     android:textAllCaps="false"
                     android:textSize="13sp"
-                    app:cornerRadius="12dp"
+                    app:cornerRadius="16dp"
                     app:icon="@drawable/baseline_local_fire_department_24"
                     app:iconSize="18dp" />
 
@@ -268,7 +330,7 @@
                     android:text="+ Water"
                     android:textAllCaps="false"
                     android:textSize="13sp"
-                    app:cornerRadius="12dp"
+                    app:cornerRadius="16dp"
                     app:icon="@drawable/baseline_water_drop_24"
                     app:iconSize="18dp" />
 
@@ -309,12 +371,23 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:clipToPadding="false"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
+                android:nestedScrollingEnabled="false"
                 tools:listitem="@layout/item_meal_card" />
+
+            <TextView
+                android:id="@+id/textNoMeals"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:gravity="center"
+                android:text="Unable to fetch meal ideas. Daily API limit may be reached."
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp"
+                android:visibility="gone" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <!-- Floating Action Button -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton

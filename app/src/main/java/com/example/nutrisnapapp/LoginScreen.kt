@@ -27,18 +27,34 @@ class LoginScreen : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
 
         // Configure Google Sign In
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id)) // from google-services.json
+        val clientId = try {
+            getString(R.string.default_web_client_id)
+        } catch (e: Exception) {
+            ""
+        }
+
+        val gsoBuilder = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestEmail()
-            .build()
+        
+        if (clientId.isNotEmpty()) {
+            gsoBuilder.requestIdToken(clientId)
+        }
+        
+        val gso = gsoBuilder.build()
         googleSignInClient = GoogleSignIn.getClient(this, gso)
 
         // Buttons
-        val btnLogin = findViewById<Button>(R.id.button2)
-        val btnGoogle = findViewById<Button>(R.id.button)
+        val btnLogin = findViewById<Button>(R.id.btnLogin)
+        val btnGoogle = findViewById<Button>(R.id.btnGoogle)
+        val txtGoToRegister = findViewById<android.widget.TextView>(R.id.txtGoToRegister)
 
-        val edtEmail = findViewById<EditText>(R.id.editTextText)
-        val edtPassword = findViewById<EditText>(R.id.editTextText2)
+        val edtEmail = findViewById<EditText>(R.id.edtEmail)
+        val edtPassword = findViewById<EditText>(R.id.edtPassword)
+
+        // Navigate to Register
+        txtGoToRegister.setOnClickListener {
+            startActivity(Intent(this, RegisterScreen::class.java))
+        }
 
         // Email/Password Login
         btnLogin.setOnClickListener {

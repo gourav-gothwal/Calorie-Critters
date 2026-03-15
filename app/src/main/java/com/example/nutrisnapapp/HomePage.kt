@@ -7,12 +7,18 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import android.view.inputmethod.EditorInfo
+import android.content.Context
+import android.view.inputmethod.InputMethodManager
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.nutrisnapapp.adapters.MealAdapter
 import com.example.nutrisnapapp.data.models.RecipeItem
+import com.example.nutrisnapapp.data.models.RecipeSearchResponse
 import com.example.nutrisnapapp.data.remote.RecipeRetrofitClient
 import com.example.nutrisnapapp.databinding.FragmentHomePageBinding
 import com.example.nutrisnapapp.viewmodel.UserStatsViewModel
@@ -47,9 +53,15 @@ class HomePage : Fragment() {
 
         setupUserInfo()
         setupProgressBars()
+        setupSwipeRefresh()
         setupClickListeners()
         setupRecyclerView()
-        fetchRandomMeals()
+        
+        // Only fetch if we don't have data yet (prevents refreshing every time we return to home)
+        if (mealList.isEmpty()) {
+            fetchRandomMeals()
+        }
+        
         animateEntrance()
     }
 
@@ -87,6 +99,13 @@ class HomePage : Fragment() {
         
         updateCaloriesUI()
         updateWaterUI()
+    }
+
+    private fun setupSwipeRefresh() {
+        binding.swipeRefresh.setColorSchemeResources(R.color.accent_vivid)
+        binding.swipeRefresh.setOnRefreshListener {
+            fetchRandomMeals()
+        }
     }
 
     private fun setupClickListeners() {
@@ -129,6 +148,8 @@ class HomePage : Fragment() {
             val detailFragment = RecipeDetailFragment().apply {
                 arguments = Bundle().apply {
                     putInt("mealId", meal.id)
+                    putString("mealTitle", meal.title)
+                    putString("mealImage", meal.image)
                 }
             }
             parentFragmentManager.beginTransaction()
@@ -138,6 +159,76 @@ class HomePage : Fragment() {
         }
         
         binding.recyclerViewMeals.adapter = mealAdapter
+        
+        setupSearch()
+    }
+
+    private fun setupSearch() {
+        binding.editSearch.setOnEditorActionListener { v, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                val query = v.text.toString()
+                if (query.isNotEmpty()) {
+                    searchMeals(query)
+                    hideKeyboard()
+                }
+                true
+            } else {
+                false
+            }
+        }
+
+        binding.editSearch.addTextChangedListener {
+            val query = it.toString()
+            binding.btnClearSearch.visibility = if (query.isEmpty()) View.GONE else View.VISIBLE
+            
+            if (query.isEmpty()) {
+                fetchRandomMeals() // Show default meals when search is cleared
+            }
+        }
+
+        binding.btnClearSearch.setOnClickListener {
+            binding.editSearch.text?.clear()
+        }
+    }
+
+    private fun hideKeyboard() {
+        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(view?.windowToken, 0)
+    }
+
+    private fun searchMeals(query: String) {
+        lifecycleScope.launch {
+            if (_binding == null) return@launch
+            try {
+                binding.swipeRefresh.isRefreshing = true
+                val response = RecipeRetrofitClient.api.searchRecipes(
+                    apiKey = BuildConfig.SPOONACULAR_API_KEY,
+                    query = query,
+                    number = 20
+                )
+
+                if (response.results.isEmpty()) {
+                    binding.textNoMeals.visibility = View.VISIBLE
+                    binding.textNoMeals.text = "No results found for '$query'"
+                    mealList.clear()
+                    mealAdapter.notifyDataSetChanged()
+                } else {
+                    binding.textNoMeals.visibility = View.GONE
+                    mealList.clear()
+                    mealList.addAll(response.results)
+                    mealAdapter.notifyDataSetChanged()
+                }
+
+            } catch (e: Exception) {
+                Log.e("HomePage", "Search failed: ${e.message}")
+                if (e.message?.contains("402") == true) {
+                    binding.textNoMeals.visibility = View.VISIBLE
+                    binding.textNoMeals.text = "Daily limit reached. Search will work tomorrow."
+                }
+            } finally {
+                binding.swipeRefresh.isRefreshing = false
+            }
+        }
     }
 
     private fun animateEntrance() {
@@ -232,23 +323,49 @@ class HomePage : Fragment() {
 
     private fun fetchRandomMeals() {
         lifecycleScope.launch {
+            if (_binding == null) return@launch
             try {
                 val response = RecipeRetrofitClient.api.getRandomMeals(
-                    apiKey = BuildConfig.SPOONACULAR_API_KEY,
-                    number = 5
+                    apiKey = BuildConfig.SPOONACULAR_API_KEY
                 )
-
-                Log.d("HomePage", "Recipes returned: ${response.recipes.size}")
-
-                mealList.clear()
-                mealList.addAll(response.recipes)
-                mealAdapter.notifyDataSetChanged()
+                
+                if (response.recipes.isEmpty()) {
+                    showFallbackMeals()
+                } else {
+                    if (_binding == null) return@launch
+                    binding.textNoMeals.visibility = View.GONE
+                    mealList.clear()
+                    mealList.addAll(response.recipes)
+                    mealAdapter.notifyDataSetChanged()
+                }
 
             } catch (e: Exception) {
-                Log.e("HomePage", "API call failed", e)
-                // Don't show toast for API failures - just log it
+                Log.e("HomePage", "API call failed: ${e.message}", e)
+                showFallbackMeals()
+                if (e.message?.contains("402") == true) {
+                    Log.e("HomePage", "Spoonacular Quota Exceeded (402)")
+                }
+            } finally {
+                binding.swipeRefresh.isRefreshing = false
             }
         }
+    }
+
+    private fun showFallbackMeals() {
+        if (_binding == null) return
+        // Show offline/placeholder meals so the app doesn't look empty
+        binding.textNoMeals.visibility = View.VISIBLE
+        binding.textNoMeals.text = "Using local samples (API limit reached)"
+        
+        val fallbackMeals = listOf(
+            RecipeItem(1, "Healthy Avocado Toast", "https://images.unsplash.com/photo-1525351484163-7529414344d8"),
+            RecipeItem(2, "Fresh Berry Smoothie", "https://images.unsplash.com/photo-1553530666-ba11a7da3888"),
+            RecipeItem(3, "Grilled Chicken Salad", "https://images.unsplash.com/photo-1546069901-ba9599a7e63c")
+        )
+        
+        mealList.clear()
+        mealList.addAll(fallbackMeals)
+        mealAdapter.notifyDataSetChanged()
     }
 
     override fun onDestroyView() {

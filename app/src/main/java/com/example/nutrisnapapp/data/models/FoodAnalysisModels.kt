@@ -20,7 +20,7 @@ data class FoodCategory(
 
 data class Nutrition(
     @SerializedName("recipesUsed")
-    val recipesUsed: Int,
+    val recipesUsed: Int? = null,
     @SerializedName("calories")
     val calories: Nutrient,
     @SerializedName("fat")

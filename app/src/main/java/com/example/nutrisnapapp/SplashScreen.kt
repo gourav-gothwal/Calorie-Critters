@@ -16,9 +16,6 @@ class SplashScreen : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash_screen)
 
-        // Initialize Firebase
-        com.google.firebase.FirebaseApp.initializeApp(this)
-
         // Get FirebaseAuth instance
         auth = FirebaseAuth.getInstance()
 

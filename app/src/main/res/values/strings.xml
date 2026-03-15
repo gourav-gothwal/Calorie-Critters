@@ -41,7 +41,4 @@
     <string name="logout">Log Out</string>
     <string name="app_version">Version 1.0.0</string>
 
-    <!-- Secrets (moved to local.properties) -->
-    <string name="api_key">REPLACEME</string>
-    <string name="default_web_client_id">REPLACEME</string>
 </resources>

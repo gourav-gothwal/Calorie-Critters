@@ -31,7 +31,15 @@ import java.io.FileOutputStream
 import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.Date
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import androidx.exifinterface.media.ExifInterface
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.label.ImageLabeling
+import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
 import java.util.Locale
+import com.google.mlkit.vision.label.ImageLabel
 
 class ScanPage : Fragment() {
 
@@ -252,41 +260,94 @@ class ScanPage : Fragment() {
                 val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
                 val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
 
-                Log.d(TAG, "Sending request to API...")
+                // --- ML-FIRST LOGIC ---
+                // 1. Get local identification from ML Kit
+                val labels = withContext(Dispatchers.Default) {
+                    val inputImage = InputImage.fromFilePath(requireContext(), uri)
+                    val labeler = ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS)
+                    
+                    kotlin.coroutines.suspendCoroutine { continuation ->
+                        labeler.process(inputImage)
+                            .addOnSuccessListener { labels ->
+                                continuation.resumeWith(Result.success(labels))
+                            }
+                            .addOnFailureListener { e ->
+                                Log.e(TAG, "ML Kit Labeling failed", e)
+                                continuation.resumeWith(Result.success(emptyList()))
+                            }
+                    }
+                }
+
+                // Log local labels for debugging
+                labels.forEach { label ->
+                    Log.d(TAG, "Local Label: ${label.text}, Confidence: ${label.confidence}")
+                }
+
+                // Filter out generic labels. We want SPECIFIC names.
+                val genericLabels = listOf("food", "fruit", "vegetable", "produce", "dish", "meal", "snack", "cuisine", "ingredient", "tableware", "indoor", "outdoor", "plant", "yellow", "natural foods")
+                val filteredLabels = labels.filter { it.text.lowercase() !in genericLabels }
+                val topLocalLabel = filteredLabels.maxByOrNull { it.confidence }
                 
+                // Identify broad categories for validation
+                val localSeesBanana = labels.any { it.text.lowercase().containsAny("banana", "plantain", "bananas") }
+                val localSeesFruit = labels.any { it.text.lowercase().containsAny("fruit", "apple", "berry", "orange", "pear", "peach") }
+                val localSeesDessert = labels.any { it.text.lowercase().containsAny("ice cream", "cake", "sweet", "dessert", "cookie") }
+
+                Log.d(TAG, "Logic Scan - Banana: $localSeesBanana, Fruit: $localSeesFruit, Dessert: $localSeesDessert")
+
+                // STRATEGY A: Direct specific hit from ML Kit (e.g., "Banana")
+                // We ONLY do a direct hit if it's a SPECIFIC food (not "Fruit" or "Vegetable")
+                if (topLocalLabel != null && topLocalLabel.confidence > 0.45) {
+                    val candidateName = topLocalLabel.text.lowercase()
+                    Log.d(TAG, "ML Kit confident in: $candidateName")
+                    
+                    val nutritionResponse = withContext(Dispatchers.IO) {
+                        RecipeRetrofitClient.api.getNutritionByFoodName(apiKey, candidateName)
+                    }
+                    
+                    if (nutritionResponse.isSuccessful && nutritionResponse.body() != null) {
+                        showLoading(false)
+                        updateUIWithResult(candidateName, nutritionResponse.body()!!)
+                        showResultCard(true)
+                        return@launch
+                    }
+                }
+
+                // 2. FALLBACK: Use heavy Cloud Image Analysis
+                Log.d(TAG, "Using fallback Cloud Image Analysis...")
                 val response = withContext(Dispatchers.IO) {
                     RecipeRetrofitClient.api.analyzeImage(apiKey, body)
                 }
                 
                 showLoading(false)
                 
-                Log.d(TAG, "Response code: ${response.code()}")
-                Log.d(TAG, "Response message: ${response.message()}")
-                
                 if (response.isSuccessful && response.body() != null) {
                     val analysis = response.body()!!
+                    val cloudName = analysis.category.name.lowercase()
+                    Log.d(TAG, "Cloud API suggested: $cloudName")
                     
-                    Log.d(TAG, "Analysis successful: ${analysis.category.name}")
-
-                    // Food name and nutrition from API response
-                    val foodName = analysis.category.name
-                    val nutrition = analysis.nutrition
-
-                    // Update UI with results
-                    binding.foodNameText.text = foodName.replaceFirstChar { 
-                        it.titlecase(Locale.getDefault()) 
+                    // CROSS-VERIFICATION: Handle Cloud "Hallucinations"
+                    val cleanCloudName = cloudName.replace("_", " ").replace("-", " ") 
+                    val cloudIsDessert = cleanCloudName.containsAny("ice cream", "dessert", "sundae", "parfait", "frozen", "cream")
+                    
+                    // Conflict Resolution: If Cloud says 'Dessert' but Local sees 'Banana' or 'Fruit'
+                    if (cloudIsDessert && (localSeesBanana || localSeesFruit) && !localSeesDessert) {
+                        val forceName = if (localSeesBanana) "banana" else "fruit"
+                        Log.w(TAG, "VETO: Cloud said '$cleanCloudName' but phone sees $forceName. Forcing recovery.")
+                        
+                        val correctionResponse = withContext(Dispatchers.IO) {
+                            RecipeRetrofitClient.api.getNutritionByFoodName(apiKey, forceName)
+                        }
+                        if (correctionResponse.isSuccessful && correctionResponse.body() != null) {
+                            updateUIWithResult(forceName, correctionResponse.body()!!)
+                            showResultCard(true)
+                            return@launch
+                        }
                     }
-                    binding.caloriesValue.text = nutrition.calories.value.toInt().toString()
-                    binding.proteinValue.text = "${nutrition.protein.value.toInt()}g"
-                    binding.carbsValue.text = "${nutrition.carbs.value.toInt()}g"
-                    binding.fatValue.text = "${nutrition.fat.value.toInt()}g"
-
-                    // Make sure all nutrition elements are visible
-                    binding.foodHeader.visibility = View.VISIBLE
-                    binding.nutritionHeader.visibility = View.VISIBLE
-                    binding.nutritionGrid.visibility = View.VISIBLE
-                    binding.textViewCalorieInfo.visibility = View.GONE
-
+                    
+                    // Clean and display Cloud Result
+                    val displayName = cleanCloudName.split(" ").joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+                    updateUIWithResult(displayName, analysis.nutrition)
                     showResultCard(true)
 
                 } else {
@@ -339,23 +400,92 @@ class ScanPage : Fragment() {
             .start()
     }
 
+    private fun updateUIWithResult(foodName: String, nutrition: com.example.nutrisnapapp.data.models.Nutrition) {
+        // Update UI with results
+        binding.foodNameText.text = foodName.replaceFirstChar { 
+            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() 
+        }
+        binding.caloriesValue.text = nutrition.calories.value.toInt().toString()
+        binding.proteinValue.text = "${nutrition.protein.value.toInt()}g"
+        binding.carbsValue.text = "${nutrition.carbs.value.toInt()}g"
+        binding.fatValue.text = "${nutrition.fat.value.toInt()}g"
+
+        // Make sure all nutrition elements are visible
+        binding.foodHeader.visibility = View.VISIBLE
+        binding.nutritionHeader.visibility = View.VISIBLE
+        binding.nutritionGrid.visibility = View.VISIBLE
+        binding.textViewCalorieInfo.visibility = View.GONE
+    }
+
     private fun uriToFile(context: Context, uri: Uri): File {
+        // First, get the filename
         val returnCursor = context.contentResolver.query(uri, null, null, null, null)
         val nameIndex = returnCursor?.getColumnIndex(OpenableColumns.DISPLAY_NAME) ?: 0
         returnCursor?.moveToFirst()
         val fileName = returnCursor?.getString(nameIndex) ?: "temp_image.jpg"
         returnCursor?.close()
 
-        val file = File(context.cacheDir, fileName)
+        val file = File(context.cacheDir, "processed_$fileName")
+        
+        // Load original bitmap
         val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
-        val outputStream = FileOutputStream(file)
-        inputStream?.copyTo(outputStream)
+        val options = BitmapFactory.Options().apply {
+            inJustDecodeBounds = true
+        }
+        BitmapFactory.decodeStream(inputStream, null, options)
         inputStream?.close()
+
+        // Calculate sample size to avoid OOM
+        val reqWidth = 1024
+        val reqHeight = 1024
+        var inSampleSize = 1
+        if (options.outHeight > reqHeight || options.outWidth > reqWidth) {
+            val halfHeight: Int = options.outHeight / 2
+            val halfWidth: Int = options.outWidth / 2
+            while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                inSampleSize *= 2
+            }
+        }
+
+        // Decode with inSampleSize
+        val decodeOptions = BitmapFactory.Options().apply {
+            this.inSampleSize = inSampleSize
+        }
+        val finalInputStream = context.contentResolver.openInputStream(uri)
+        var bitmap = BitmapFactory.decodeStream(finalInputStream, null, decodeOptions)
+        finalInputStream?.close()
+
+        // Handle rotation from EXIF
+        bitmap?.let {
+            val exifInputStream = context.contentResolver.openInputStream(uri)
+            val exif = exifInputStream?.let { it1 -> ExifInterface(it1) }
+            val orientation = exif?.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+            exifInputStream?.close()
+
+            val matrix = Matrix()
+            when (orientation) {
+                ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+                ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+                ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+            }
+            
+            if (orientation != ExifInterface.ORIENTATION_NORMAL && orientation != 0) {
+                bitmap = Bitmap.createBitmap(it, 0, 0, it.width, it.height, matrix, true)
+            }
+        }
+
+        // Compress and save
+        val outputStream = FileOutputStream(file)
+        bitmap?.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
         outputStream.close()
         
-        Log.d(TAG, "URI to File: $fileName, size: ${file.length()} bytes")
+        Log.d(TAG, "Processed Image: $fileName, Final size: ${file.length()} bytes")
         
         return file
+    }
+
+    private fun String.containsAny(vararg keywords: String): Boolean {
+        return keywords.any { this.contains(it, ignoreCase = true) }
     }
 
     override fun onDestroyView() {
