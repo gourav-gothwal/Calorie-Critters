@@ -41,7 +41,6 @@
             android:textSize="15sp" />
     </LinearLayout>
 
-    <!-- Content Card -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -52,93 +51,100 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/brandingHeader">
 
-        <LinearLayout
+        <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:padding="32dp">
+            android:fillViewport="true">
 
-            <!-- Calorie Goal -->
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Daily Calorie Goal"
-                android:textColor="@color/text_primary"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:layout_marginStart="4dp"
-                android:layout_marginBottom="8dp" />
+                android:orientation="vertical"
+                android:padding="32dp"
+                android:paddingBottom="48dp">
 
-            <EditText
-                android:id="@+id/editTextText3"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="@drawable/auth_input_bg"
-                android:hint="e.g. 2000"
-                android:inputType="number"
-                android:paddingHorizontal="20dp"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp" />
+                <!-- Calorie Goal -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Daily Calorie Goal"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginBottom="8dp" />
 
-            <!-- Age -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Age"
-                android:textColor="@color/text_primary"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:layout_marginStart="4dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="8dp" />
+                <EditText
+                    android:id="@+id/editTextText3"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="@drawable/auth_input_bg"
+                    android:hint="e.g. 2000"
+                    android:inputType="number"
+                    android:paddingHorizontal="20dp"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
 
-            <EditText
-                android:id="@+id/editTextText4"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="@drawable/auth_input_bg"
-                android:hint="Enter your age"
-                android:inputType="number"
-                android:paddingHorizontal="20dp"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp" />
+                <!-- Age -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Age"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="8dp" />
 
-            <!-- Gender -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Gender"
-                android:textColor="@color/text_primary"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:layout_marginStart="4dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="8dp" />
+                <EditText
+                    android:id="@+id/editTextText4"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="@drawable/auth_input_bg"
+                    android:hint="Enter your age"
+                    android:inputType="number"
+                    android:paddingHorizontal="20dp"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
 
-            <EditText
-                android:id="@+id/editTextText5"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="@drawable/auth_input_bg"
-                android:hint="Male, Female, etc."
-                android:inputType="text"
-                android:paddingHorizontal="20dp"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp" />
+                <!-- Gender -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Gender"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="8dp" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/button3"
-                android:layout_width="match_parent"
-                android:layout_height="60dp"
-                android:layout_marginTop="40dp"
-                android:backgroundTint="@color/accent_vivid"
-                android:text="Complete Setup"
-                android:textAllCaps="false"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:cornerRadius="18dp" />
+                <EditText
+                    android:id="@+id/editTextText5"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="@drawable/auth_input_bg"
+                    android:hint="Male, Female, etc."
+                    android:inputType="text"
+                    android:paddingHorizontal="20dp"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
 
-        </LinearLayout>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button3"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:layout_marginTop="40dp"
+                    android:backgroundTint="@color/accent_vivid"
+                    android:text="Complete Setup"
+                    android:textAllCaps="false"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="18dp" />
+
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
     </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("com.google.gms.google-services")
+    alias(libs.plugins.google.devtools.ksp)
 }
 
 // Load local.properties
@@ -83,6 +84,7 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:32.8.0")) // Updated to latest stable
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth-ktx")
+    implementation(libs.firebase.firestore)
     implementation("com.google.android.gms:play-services-auth:21.0.0") // Updated to stable version
 
     // ✅ Credentials (simplified - remove if not needed)
@@ -115,4 +117,9 @@ dependencies {
 
     // Swipe Refresh Layout
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+
+    // ✅ Room
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 }

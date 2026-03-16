@@ -9,6 +9,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
 import com.example.nutrisnapapp.databinding.FragmentProfilePageBinding
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 
 class ProfilePage : Fragment() {
@@ -97,13 +99,46 @@ class ProfilePage : Fragment() {
     }
 
     private fun performLogout() {
-        FirebaseAuth.getInstance().signOut()
+        val currentContext = context ?: return
+        val currentActivity = activity ?: return
+
+        try {
+            // Disable button to prevent double-click crashes
+            binding.menuLogout.isEnabled = false
+            Toast.makeText(currentContext, "Logging out...", Toast.LENGTH_SHORT).show()
+            
+            // 1. Sign out from Firebase
+            FirebaseAuth.getInstance().signOut()
+            
+            // 2. Sign out from Google (if applicable)
+            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .build()
+            
+            val googleSignInClient = GoogleSignIn.getClient(currentActivity, gso)
+            googleSignInClient.signOut().addOnCompleteListener {
+                if (isAdded && activity != null) {
+                    navigateToLogin()
+                }
+            }.addOnFailureListener {
+                if (isAdded && activity != null) {
+                    navigateToLogin()
+                }
+            }
+        } catch (e: Exception) {
+            // Fallback if anything goes wrong during sign out
+            navigateToLogin()
+        }
+    }
+
+    private fun navigateToLogin() {
+        val currentContext = context ?: return
+        val currentActivity = activity ?: return
         
-        // Navigate to login screen
-        val intent = Intent(requireContext(), LoginScreen::class.java)
+        val intent = Intent(currentContext, LoginScreen::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
-        activity?.finish()
+        currentActivity.finish()
     }
 
     private fun animateEntrance() {

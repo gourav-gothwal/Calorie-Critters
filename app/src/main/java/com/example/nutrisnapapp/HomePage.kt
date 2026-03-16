@@ -21,6 +21,7 @@ import com.example.nutrisnapapp.data.models.RecipeItem
 import com.example.nutrisnapapp.data.models.RecipeSearchResponse
 import com.example.nutrisnapapp.data.remote.RecipeRetrofitClient
 import com.example.nutrisnapapp.databinding.FragmentHomePageBinding
+import com.example.nutrisnapapp.viewmodel.RecipeViewModel
 import com.example.nutrisnapapp.viewmodel.UserStatsViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
@@ -30,14 +31,9 @@ class HomePage : Fragment() {
     private var _binding: FragmentHomePageBinding? = null
     private val binding get() = _binding!!
 
-    private var totalCalories = 0
-    private var totalWater = 0
-    private val calorieGoal = 2000
-    private val waterGoal = 3000
-    
     private lateinit var mealAdapter: MealAdapter
-    private val mealList = mutableListOf<RecipeItem>()
     private val statsViewModel: UserStatsViewModel by activityViewModels()
+    private val recipeViewModel: RecipeViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -56,11 +52,10 @@ class HomePage : Fragment() {
         setupSwipeRefresh()
         setupClickListeners()
         setupRecyclerView()
+        setupObservers()
         
-        // Only fetch if we don't have data yet (prevents refreshing every time we return to home)
-        if (mealList.isEmpty()) {
-            fetchRandomMeals()
-        }
+        // Initial fetch - ViewModel will decide if it needs to hit the network
+        recipeViewModel.fetchRandomRecipes()
         
         animateEntrance()
     }
@@ -92,19 +87,15 @@ class HomePage : Fragment() {
     }
 
     private fun setupProgressBars() {
-        binding.caloriesCircularProgress.progressMax = calorieGoal.toFloat()
-        binding.waterCircularProgress.progressMax = waterGoal.toFloat()
-        binding.caloriesCircularProgress.progress = totalCalories.toFloat()
-        binding.waterCircularProgress.progress = totalWater.toFloat()
-        
-        updateCaloriesUI()
-        updateWaterUI()
+        // Initial values will be handled by observers
+        binding.caloriesCircularProgress.progress = 0f
+        binding.waterCircularProgress.progress = 0f
     }
 
     private fun setupSwipeRefresh() {
         binding.swipeRefresh.setColorSchemeResources(R.color.accent_vivid)
         binding.swipeRefresh.setOnRefreshListener {
-            fetchRandomMeals()
+            recipeViewModel.fetchRandomRecipes(forceRefresh = true)
         }
     }
 
@@ -143,7 +134,7 @@ class HomePage : Fragment() {
             false
         )
 
-        mealAdapter = MealAdapter(mealList) { meal ->
+        mealAdapter = MealAdapter(emptyList()) { meal ->
             // Navigate to recipe detail via fragment transaction
             val detailFragment = RecipeDetailFragment().apply {
                 arguments = Bundle().apply {
@@ -161,6 +152,52 @@ class HomePage : Fragment() {
         binding.recyclerViewMeals.adapter = mealAdapter
         
         setupSearch()
+    }
+
+    private fun setupObservers() {
+        // Recipe Observers
+        lifecycleScope.launch {
+            recipeViewModel.recipes.collect { recipes ->
+                mealAdapter.updateData(recipes)
+                binding.textNoMeals.visibility = if (recipes.isEmpty()) View.VISIBLE else View.GONE
+            }
+        }
+
+        lifecycleScope.launch {
+            recipeViewModel.isLoading.collect { isLoading ->
+                binding.swipeRefresh.isRefreshing = isLoading
+            }
+        }
+
+        lifecycleScope.launch {
+            recipeViewModel.errorMessage.collect { message ->
+                if (message != null) {
+                    binding.textNoMeals.visibility = View.VISIBLE
+                    binding.textNoMeals.text = message
+                }
+            }
+        }
+
+        // Stats Observers
+        statsViewModel.caloriesConsumed.observe(viewLifecycleOwner) { calories ->
+            binding.caloriesCount.text = calories.toString()
+            binding.caloriesCircularProgress.setProgressWithAnimation(calories.toFloat(), 500)
+        }
+
+        statsViewModel.waterIntake.observe(viewLifecycleOwner) { water ->
+            binding.waterIntake.text = water.toString()
+            binding.waterCircularProgress.setProgressWithAnimation(water.toFloat(), 500)
+        }
+
+        statsViewModel.calorieGoal.observe(viewLifecycleOwner) { goal ->
+            binding.caloriesCircularProgress.progressMax = goal.toFloat()
+            binding.caloriesGoal.text = "of $goal"
+        }
+
+        statsViewModel.waterGoal.observe(viewLifecycleOwner) { goal ->
+            binding.waterCircularProgress.progressMax = goal.toFloat()
+            binding.waterGoal.text = "of $goal"
+        }
     }
 
     private fun setupSearch() {
@@ -182,7 +219,8 @@ class HomePage : Fragment() {
             binding.btnClearSearch.visibility = if (query.isEmpty()) View.GONE else View.VISIBLE
             
             if (query.isEmpty()) {
-                fetchRandomMeals() // Show default meals when search is cleared
+                // If search cleared, go back to random list (locally)
+                recipeViewModel.fetchRandomRecipes(forceRefresh = false)
             }
         }
 
@@ -197,38 +235,7 @@ class HomePage : Fragment() {
     }
 
     private fun searchMeals(query: String) {
-        lifecycleScope.launch {
-            if (_binding == null) return@launch
-            try {
-                binding.swipeRefresh.isRefreshing = true
-                val response = RecipeRetrofitClient.api.searchRecipes(
-                    apiKey = BuildConfig.SPOONACULAR_API_KEY,
-                    query = query,
-                    number = 20
-                )
-
-                if (response.results.isEmpty()) {
-                    binding.textNoMeals.visibility = View.VISIBLE
-                    binding.textNoMeals.text = "No results found for '$query'"
-                    mealList.clear()
-                    mealAdapter.notifyDataSetChanged()
-                } else {
-                    binding.textNoMeals.visibility = View.GONE
-                    mealList.clear()
-                    mealList.addAll(response.results)
-                    mealAdapter.notifyDataSetChanged()
-                }
-
-            } catch (e: Exception) {
-                Log.e("HomePage", "Search failed: ${e.message}")
-                if (e.message?.contains("402") == true) {
-                    binding.textNoMeals.visibility = View.VISIBLE
-                    binding.textNoMeals.text = "Daily limit reached. Search will work tomorrow."
-                }
-            } finally {
-                binding.swipeRefresh.isRefreshing = false
-            }
-        }
+        recipeViewModel.searchRecipes(query)
     }
 
     private fun animateEntrance() {
@@ -290,83 +297,13 @@ class HomePage : Fragment() {
     }
 
     private fun updateTotalCalories(caloriesToAdd: Int) {
-        totalCalories += caloriesToAdd
-        updateCaloriesUI()
-        
-        // Animate progress
-        binding.caloriesCircularProgress.setProgressWithAnimation(
-            totalCalories.toFloat(), 
-            500
-        )
+        statsViewModel.addCalories(caloriesToAdd)
     }
 
     private fun updateTotalWater(waterToAdd: Int) {
-        totalWater += waterToAdd
-        updateWaterUI()
-        
-        // Animate progress
-        binding.waterCircularProgress.setProgressWithAnimation(
-            totalWater.toFloat(), 
-            500
-        )
+        statsViewModel.addWater(waterToAdd)
     }
 
-    private fun updateCaloriesUI() {
-        binding.caloriesCount.text = totalCalories.toString()
-        binding.caloriesGoal.text = "of $calorieGoal"
-    }
-
-    private fun updateWaterUI() {
-        binding.waterIntake.text = totalWater.toString()
-        binding.waterGoal.text = "of $waterGoal"
-    }
-
-    private fun fetchRandomMeals() {
-        lifecycleScope.launch {
-            if (_binding == null) return@launch
-            try {
-                val response = RecipeRetrofitClient.api.getRandomMeals(
-                    apiKey = BuildConfig.SPOONACULAR_API_KEY
-                )
-                
-                if (response.recipes.isEmpty()) {
-                    showFallbackMeals()
-                } else {
-                    if (_binding == null) return@launch
-                    binding.textNoMeals.visibility = View.GONE
-                    mealList.clear()
-                    mealList.addAll(response.recipes)
-                    mealAdapter.notifyDataSetChanged()
-                }
-
-            } catch (e: Exception) {
-                Log.e("HomePage", "API call failed: ${e.message}", e)
-                showFallbackMeals()
-                if (e.message?.contains("402") == true) {
-                    Log.e("HomePage", "Spoonacular Quota Exceeded (402)")
-                }
-            } finally {
-                binding.swipeRefresh.isRefreshing = false
-            }
-        }
-    }
-
-    private fun showFallbackMeals() {
-        if (_binding == null) return
-        // Show offline/placeholder meals so the app doesn't look empty
-        binding.textNoMeals.visibility = View.VISIBLE
-        binding.textNoMeals.text = "Using local samples (API limit reached)"
-        
-        val fallbackMeals = listOf(
-            RecipeItem(1, "Healthy Avocado Toast", "https://images.unsplash.com/photo-1525351484163-7529414344d8"),
-            RecipeItem(2, "Fresh Berry Smoothie", "https://images.unsplash.com/photo-1553530666-ba11a7da3888"),
-            RecipeItem(3, "Grilled Chicken Salad", "https://images.unsplash.com/photo-1546069901-ba9599a7e63c")
-        )
-        
-        mealList.clear()
-        mealList.addAll(fallbackMeals)
-        mealAdapter.notifyDataSetChanged()
-    }
 
     override fun onDestroyView() {
         super.onDestroyView()

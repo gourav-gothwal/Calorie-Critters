@@ -12,9 +12,14 @@ import com.example.nutrisnapapp.data.models.RecipeItem
 
 
 class MealAdapter(
-    private val meals: List<RecipeItem>,
+    private var meals: List<RecipeItem>,
     private val onClick: (RecipeItem) -> Unit
 ) : RecyclerView.Adapter<MealAdapter.MealViewHolder>() {
+
+    fun updateData(newMeals: List<RecipeItem>) {
+        meals = newMeals
+        notifyDataSetChanged()
+    }
 
     inner class MealViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val mealImage: ImageView = itemView.findViewById(R.id.imageViewMeal)
